@@ -1,5 +1,6 @@
 import express from 'express'
 import surveyModel from '../model/survey'
+import contactModel from '../model/contact'
 const router = express.Router()
 
 const nodemailer = require("nodemailer");
@@ -47,7 +48,22 @@ const sendThanks = async (email) => {
     error ? console.log(error) : console.log(response);
     smtpTransport.close();
 });
+}
 
+const sendIvitation = async (email, referid) => {
+    console.log('Send invitation to ', email)
+    const mailOptions = {
+        from: "hoangdinhthinh@hcmut.edu.vn",
+        to: email,
+        subject: "Xin mời tham gia khảo sát",
+        generateTextFromHTML: true,
+        html: "Kính thưa quý ông bà <br/> Bộ môn Kỹ thuật Hàng không xin trân trọng kính mời quý ông bà tham gia thực hiện khảo sát về Chương trình Đào tạo ngành Kỹ thuật Hàng Không tại <a href='http://dae.dte.hcmut.edu.vn:3000/" + referid + "'>đây</a>. Ý kiến đóng góp của quý ông bà rất quan trọng đối với việc phát triển chương trình đào tạo cử nhân và kỹ sự kỹ thuật hàng không phù hợp với yêu cầu của doanh nghiệp trong thời đại mới. Xin trân trọng cảm ơn quý ông bà đã dành thời gian hoàn thành khảo sát. <br/> Trân trọng <br/> Hoàng Đình Thịnh <br/> Giảng viên, phụ trách dự án ReactSurvey."
+   };
+
+   smtpTransport.sendMail(mailOptions, (error, response) => {
+    error ? console.log(error) : console.log(response);
+    smtpTransport.close();
+});
 }
 
 router.post('/submit', async (req, res) => {
@@ -60,6 +76,16 @@ router.post('/submit', async (req, res) => {
             await sendThanks(req.body.qemail)
         res.status(200).send('OK')
     }
+})
+
+router.post('/invite', async (req, res) => {
+    let contactCount = 0
+    let contacts = await contactModel.find()
+    contacts.forEach((c) => {
+        sendIvitation(c.email, c.referid)
+        contactCount++
+    })
+    res.status(200).send('Sent email to ' + contactCount + ' contacts.')
 })
 
 module.exports = router
